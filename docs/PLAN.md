@@ -1,0 +1,1 @@
+pbpaste > docs/PLAN.md
