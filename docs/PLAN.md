@@ -23,7 +23,8 @@ Scrolling controls altitude, and the fall has four beats.
 
 Rules for the fall:
 
-- **Character pick:** a default character is pre-selected with a Jump button, so choosing is optional. This is an assumption; see Open decisions.
+- **Character pick:** required. The visitor picks one of the characters before the Jump button works.
+- **Return visits:** visitors who have already seen the fall skip straight to the landing with the character they picked before, and a replay button plays the fall again.
 - **Character count:** two for now. Each needs falling, parachute, and walking sprites.
 - **Escape routes:** a "skip to ground" button and a link to the plain index stay visible throughout.
 - **Reduced motion:** visitors who have motion turned off get a static summary instead of the animation.
@@ -160,9 +161,9 @@ Grouped by the phase that needs the answer.
 
 **Before phase 2 (the fall):**
 
-- [ ] Character pick: optional with a default pre-selected (assumed), or required before the jump?
+- [x] Character pick: **required** before the jump.
 - [x] Character count: **two** for now.
-- [ ] Return visits: skip the fall for visitors who have already seen it, with a replay button?
+- [x] Return visits: **skip the fall** for visitors who have already seen it, with a replay button.
 - [x] Landing destination: the character lands **in the middle of the village, surrounded by the buildings**. Until phase 3 builds the village, the landing beat shows the village center with placeholder buildings.
 - [x] Featured projects: **the three projects on the resume** (Imprint Success DNA, the haptic device, and the RAG chatbot). New projects aren't featured. Internship projects come later.
 - [x] Internship: **add an entry** before the parachute beat is built.
