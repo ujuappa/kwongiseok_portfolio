@@ -16,12 +16,12 @@ The decisions referenced here are listed in [PLAN.md → Open decisions](PLAN.md
 - [x] Pick the three featured projects: the three on the resume, which are already marked `featured: true`.
 - [ ] Add the internship entry in `src/content/experience/` with `kind: internship`, before Sunday's parachute beat. Keep it to your role and what you learned, with nothing proprietary.
 - [ ] Later: add projects from the internship. They follow the same rule: describe the work and what you learned, with no employer code, data, documents, or screenshots.
-- [ ] Rewrite the repeated bullets in Imprint Success DNA and the RAG chatbot. In both, the summary repeats the first bullet.
+- [x] Rewrite the repeated bullets in Imprint Success DNA and the RAG chatbot. In both, the summary repeats the first bullet.
 - [x] Regroup skills by area instead of by level. Rename `level` to `area` in `src/content.config.ts`, `src/components/PlainIndex.astro`, and `src/content/profile.yaml`. Do this before Sunday, because the parachute beat shows skills.
 - [ ] Write first entries: five books, three hobbies, three tastes (one each for music, shows, and food), and two notes. Sunday doesn't depend on these.
 - [x] Decided: two characters, and the landing is in the middle of the village, surrounded by the buildings.
 - [ ] Settle the two remaining phase 2 decisions: optional or required character pick, and skipping the fall on return visits. The signpost can wait for phase 3.
-- [ ] Run Lighthouse on `/map/`. The plan asks for a performance and accessibility check after each phase, and phase 1 hasn't had one.
+- [x] Run Lighthouse on `/map/`. The plan asks for a performance and accessibility check after each phase. Phase 1 result (Nov 20, local preview): 100 in every category on mobile and desktop.
 
 ## Sunday: start phase 2, the fall
 
