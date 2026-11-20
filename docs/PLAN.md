@@ -131,7 +131,7 @@ Claude Code is the main build tool, and skills give it reliable knowledge of eac
 - **GSAP skills:** GSAP publishes [official skills](https://github.com/greensock/gsap-skills) covering ScrollTrigger, timelines, and performance.
 - **Three.js skills:** a [community collection](https://github.com/cloudai-x/threejs-skills) covers scene setup, lighting, loaders, and shaders.
 - **Phaser skills:** a tilemap skill is listed on skills.sh under Phaser's repository. Its contents are not yet verified.
-- **add-content (to write):** a project skill that explains how to add a project, book, hobby, or note as a content file.
+- **add-content (written):** a project skill that explains how to add a project, experience entry, book, hobby, taste, or note as a content file, and how to edit the profile.
 - **village-style (to write):** a project skill that holds the style rules: palette, tile size, fonts, and the shared exit button.
 
 Third-party skills can include scripts, so read each one before installing it.

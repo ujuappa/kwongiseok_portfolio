@@ -27,6 +27,7 @@ Astro 7 needs Node 22.23.4 or newer.
 ## Content rules
 
 - **One source of truth.** All text lives in `src/content/`. A scene never keeps its own copy of the text.
+- **Adding content:** follow the `add-content` skill in `.claude/skills/add-content/`. It has a template for each collection and the privacy check. When a schema changes, update the skill in the same commit.
 - **Schemas** are in `src/content.config.ts` and use Zod 4 imported from `astro/zod`. The collections are projects, experience, books, hobbies, tastes, and notes, plus `profile.yaml` for the name, tagline, skills, and links.
 - **Every entry** is one Markdown file with `title`, `date`, and `tags` in its frontmatter. Set `draft: true` to hide an entry.
 - **Reading content:** go through `src/lib/content.ts`, using `getPublished`, `getFeaturedProjects`, and `getProfile`. These helpers keep sorting and draft filtering in one place.

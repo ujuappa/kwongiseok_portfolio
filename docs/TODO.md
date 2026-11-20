@@ -39,4 +39,4 @@ The decisions referenced here are listed in [PLAN.md → Open decisions](PLAN.md
 - [ ] Confirm two behaviors I assumed:
   - Skipping counts as having seen the fall, so the next visit starts at the landing.
   - Skipping before picking a character lands with no skydiver.
-- [ ] Stretch: write the `add-content` project skill. Write it last, so it describes the schema after Saturday's changes.
+- [x] Stretch: write the `add-content` project skill (`.claude/skills/add-content/SKILL.md`). Its templates were checked with a test build.
