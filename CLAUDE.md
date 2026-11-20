@@ -37,6 +37,7 @@ Astro 7 needs Node 22.23.4 or newer.
 - **Internal links and asset paths** go through `url()` from `src/lib/content.ts`. The site is served under the `/kwongiseok_portfolio` base path.
 - **Shared frame:** the font and accent color are CSS variables in `src/layouts/Base.astro`. Every interior uses the same exit button, font, and accent color.
 - **Libraries load lazily.** GSAP loads only on the fall. Phaser and Three.js load only when their building's door is opened.
+- **Link previews:** `Base.astro` writes the Open Graph tags from each page's `title` and `description`. The default image is `public/og.png` (1200×630), a placeholder to replace once the fall has art. Pass `image` to give a page its own preview, and `noindex` to keep a page out of search (the 404 page uses it).
 - **Accessibility:** respect `prefers-reduced-motion`, which gets a static summary instead of the animation. Keep "skip to ground" and the link to the plain index visible during the fall.
 - **Layout:** follow the folder layout in docs/PLAN.md → Architecture. Scenes go in `src/scenes/<name>/`, shared UI in `src/components/`, and sprites, tiles, and audio in `public/assets/`.
 - **Styles:** the village is not pixel art. Only the pixel house is pixel art, and only the library is 3D. The mismatch is deliberate.

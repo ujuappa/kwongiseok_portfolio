@@ -1,17 +1,32 @@
 ---
 // Shared page shell. The font and accent tokens here are the "shared frame"
 // every interior reuses (docs/PLAN.md → The village).
-import { url } from '../lib/content';
+import { getProfile, url } from '../lib/content';
 
 interface Props {
   title: string;
   description: string;
   /** Path of the canonical copy of this page, if it lives elsewhere. */
   canonicalPath?: string;
+  /** Link-preview image, as a site path. 1200×630 works everywhere. */
+  image?: string;
+  imageAlt?: string;
+  /** Keep the page out of search results (the 404 page). */
+  noindex?: boolean;
 }
 
-const { title, description, canonicalPath } = Astro.props;
+const profile = await getProfile();
+const {
+  title,
+  description,
+  canonicalPath,
+  image = '/og.png',
+  imageAlt = `${profile.name}: portfolio`,
+  noindex = false,
+} = Astro.props;
 const canonical = new URL(canonicalPath ? url(canonicalPath) : Astro.url.pathname, Astro.site);
+// Link previews need an absolute image URL.
+const imageUrl = new URL(url(image), Astro.site);
 ---
 
 <!doctype html>
@@ -21,7 +36,20 @@ const canonical = new URL(canonicalPath ? url(canonicalPath) : Astro.url.pathnam
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+
+    <!-- Link previews (Open Graph, also read by X, Slack, Discord, KakaoTalk, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={profile.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {!noindex && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
     <meta name="generator" content={Astro.generator} />
   </head>
