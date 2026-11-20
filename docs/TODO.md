@@ -17,7 +17,7 @@ The decisions referenced here are listed in [PLAN.md → Open decisions](PLAN.md
 - [ ] Add the internship entry in `src/content/experience/` with `kind: internship`, before Sunday's parachute beat. Keep it to your role and what you learned, with nothing proprietary.
 - [ ] Later: add projects from the internship. They follow the same rule: describe the work and what you learned, with no employer code, data, documents, or screenshots.
 - [ ] Rewrite the repeated bullets in Imprint Success DNA and the RAG chatbot. In both, the summary repeats the first bullet.
-- [ ] Regroup skills by area instead of by level. Rename `level` to `area` in `src/content.config.ts`, `src/components/PlainIndex.astro`, and `src/content/profile.yaml`. Do this before Sunday, because the parachute beat shows skills.
+- [x] Regroup skills by area instead of by level. Rename `level` to `area` in `src/content.config.ts`, `src/components/PlainIndex.astro`, and `src/content/profile.yaml`. Do this before Sunday, because the parachute beat shows skills.
 - [ ] Write first entries: five books, three hobbies, three tastes (one each for music, shows, and food), and two notes. Sunday doesn't depend on these.
 - [x] Decided: two characters, and the landing is in the middle of the village, surrounded by the buildings.
 - [ ] Settle the two remaining phase 2 decisions: optional or required character pick, and skipping the fall on return visits. The signpost can wait for phase 3.

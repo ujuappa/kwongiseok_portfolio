@@ -6,10 +6,12 @@
     - label: LinkedIn
       url: https://linkedin.com/in/quan2/
   skills:
-    - level: Proficient
-      items: [C++, C#, Python]
-    - level: Intermediate
-      items: [Java, Node.js, SQL]
-    - level: Beginner
-      items: [Unreal Engine, Unity, Machine learning]
+    - area: Programming languages
+      items: [C++, C#, Python, Java]
+    - area: Backend and data
+      items: [Node.js, SQL]
+    - area: AI and machine learning
+      items: [Machine learning]
+    - area: Game development
+      items: [Unity, Unreal Engine]
   languages: [Korean (fluent), English (fluent), Spanish (conversational), Japanese (conversational)]

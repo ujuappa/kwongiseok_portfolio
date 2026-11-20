@@ -83,7 +83,8 @@ const profile = defineCollection({
     name: z.string(),
     tagline: z.string(),
     links: z.array(link).default([]),
-    skills: z.array(z.object({ level: z.string(), items: z.array(z.string()) })).default([]),
+    // Grouped by area (e.g. "Languages", "Game development"), not by proficiency level.
+    skills: z.array(z.object({ area: z.string(), items: z.array(z.string()) })).default([]),
     languages: z.array(z.string()).default([]),
   }),
 });
