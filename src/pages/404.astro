@@ -1,0 +1,51 @@
+---
+// Custom 404. GitHub Pages serves the built 404.html for any unknown path
+// under the site's base.
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/content';
+---
+
+<Base title="Page not found" description="This address isn't on the site." noindex>
+  <main id="main" class="lost">
+    <p class="code" aria-hidden="true">404</p>
+    <h1>Page not found</h1>
+    <p>This address isn't on the map. The link may be out of date or mistyped.</p>
+    <ul>
+      <li><a href={url('/')}>Go to the home page</a></li>
+      <li><a href={url('/map/')}>Open the site index</a></li>
+    </ul>
+  </main>
+</Base>
+
+<style>
+  .lost {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 18vh 1rem 4rem;
+  }
+  .code {
+    margin: 0;
+    font-size: clamp(5rem, 22vw, 11rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+  }
+  h1 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+  }
+</style>
