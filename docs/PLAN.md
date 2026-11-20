@@ -1,6 +1,6 @@
 # Portfolio Website: Project Plan
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 ## Concept
 
@@ -19,12 +19,12 @@ Scrolling controls altitude, and the fall has four beats.
 1. **Airplane:** a plane carrying the site owner's name flies to the center of the screen and holds while clouds drift past. The visitor picks a character and jumps.
 2. **Freefall:** the character skydives and project cards pass as clouds. Three featured projects at most.
 3. **Parachute:** the chute opens and the fall slows. The open sky shows experience, skills, internship, and education.
-4. **Landing:** the character lands and the village comes into view.
+4. **Landing:** the character lands in the middle of the village, surrounded by the buildings.
 
 Rules for the fall:
 
 - **Character pick:** a default character is pre-selected with a Jump button, so choosing is optional. This is an assumption; see Open decisions.
-- **Character count:** two or three. Each needs falling, parachute, and walking sprites.
+- **Character count:** two for now. Each needs falling, parachute, and walking sprites.
 - **Escape routes:** a "skip to ground" button and a link to the plain index stay visible throughout.
 - **Reduced motion:** visitors who have motion turned off get a static summary instead of the animation.
 - **Persistence:** the chosen character carries into the village and the pixel house.
@@ -156,10 +156,27 @@ A public GitHub repo exposes every file and its full history, so these rules app
 
 ## Open decisions
 
+Grouped by the phase that needs the answer.
+
+**Before phase 2 (the fall):**
+
 - [ ] Character pick: optional with a default pre-selected (assumed), or required before the jump?
-- [ ] Music and shows: rooms in the pixel house only (assumed), or village buildings as well?
-- [ ] Signpost: add a village map at the landing spot that doubles as the fast index?
+- [x] Character count: **two** for now.
 - [ ] Return visits: skip the fall for visitors who have already seen it, with a replay button?
+- [x] Landing destination: the character lands **in the middle of the village, surrounded by the buildings**. Until phase 3 builds the village, the landing beat shows the village center with placeholder buildings.
+- [x] Featured projects: **the three projects on the resume** (Imprint Success DNA, the haptic device, and the RAG chatbot). New projects aren't featured. Internship projects come later.
+- [x] Internship: **add an entry** before the parachute beat is built.
+
+**Before phase 3 (the village):**
+
+- [ ] Signpost: add a village map at the landing spot that doubles as the fast index?
 - [ ] Village style: Kenney Sketch Town, or another non-pixel style?
+- [ ] Music and shows: rooms in the pixel house only (assumed), or village buildings as well?
+
+**Before phase 4 (pixel house):**
+
 - [ ] Pixel house furniture: pay for Modern Interiors, or use Kenney's free indoor tiles?
-- [ ] Hosting: Cloudflare Workers or GitHub Pages?
+
+**Anytime:**
+
+- [ ] Hosting: Cloudflare Workers or GitHub Pages? The site deploys to GitHub Pages for now.
