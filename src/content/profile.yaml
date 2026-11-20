@@ -1,0 +1,15 @@
+# Site-wide facts. No phone, home address, birthdate, or personal email (docs/PLAN.md → Privacy).
+- id: main
+  name: Giseok Kwon
+  tagline: Computer science student at BYU–Idaho building backends and AI pipelines.
+  links:
+    - label: LinkedIn
+      url: https://linkedin.com/in/quan2/
+  skills:
+    - level: Proficient
+      items: [C++, C#, Python]
+    - level: Intermediate
+      items: [Java, Node.js, SQL]
+    - level: Beginner
+      items: [Unreal Engine, Unity, Machine learning]
+  languages: [Korean (fluent), English (fluent), Spanish (conversational), Japanese (conversational)]

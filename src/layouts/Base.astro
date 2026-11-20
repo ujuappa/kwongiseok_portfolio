@@ -1,0 +1,82 @@
+---
+// Shared page shell. The font and accent tokens here are the "shared frame"
+// every interior reuses (docs/PLAN.md → The village).
+import { url } from '../lib/content';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path of the canonical copy of this page, if it lives elsewhere. */
+  canonicalPath?: string;
+}
+
+const { title, description, canonicalPath } = Astro.props;
+const canonical = new URL(canonicalPath ? url(canonicalPath) : Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    --accent: #c2410c;
+    --bg: #fdfcfa;
+    --fg: #1c1917;
+    --muted: #57534e;
+    --line: #e7e5e4;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #fb923c;
+      --bg: #1c1917;
+      --fg: #f5f5f4;
+      --muted: #a8a29e;
+      --line: #44403c;
+    }
+  }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    line-height: 1.6;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  a {
+    color: var(--accent);
+  }
+  a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .skip {
+    position: absolute;
+    left: -999px;
+  }
+  .skip:focus {
+    left: 1rem;
+    top: 1rem;
+    background: var(--bg);
+    padding: 0.5rem 0.75rem;
+  }
+</style>

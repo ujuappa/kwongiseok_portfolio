@@ -1,0 +1,12 @@
+---
+// The plain index (docs/PLAN.md → Concept). Canonical text-first copy of the site.
+import Base from '../layouts/Base.astro';
+import PlainIndex from '../components/PlainIndex.astro';
+import { getProfile } from '../lib/content';
+
+const profile = await getProfile();
+---
+
+<Base title={profile.name} description={profile.tagline}>
+  <PlainIndex />
+</Base>

@@ -1,0 +1,295 @@
+---
+// The plain index: a fast, text-first view of every collection.
+// It is the fallback for phones, search engines, and anyone who skips the scenes.
+import { render, type CollectionEntry } from 'astro:content';
+import { formatMonth, formatPeriod, getProfile, getPublished } from '../lib/content';
+
+const profile = await getProfile();
+const [projects, experience, books, hobbies, tastes, notes] = await Promise.all([
+  getPublished('projects'),
+  getPublished('experience'),
+  getPublished('books'),
+  getPublished('hobbies'),
+  getPublished('tastes'),
+  getPublished('notes'),
+]);
+
+const renderedProjects = await Promise.all(
+  projects.map(async (entry) => ({ entry, Content: (await render(entry)).Content })),
+);
+
+const byKind = (...kinds: CollectionEntry<'experience'>['data']['kind'][]) =>
+  experience.filter((e) => kinds.includes(e.data.kind));
+
+const experienceGroups = [
+  { id: 'experience', heading: 'Experience', entries: byKind('work', 'internship') },
+  { id: 'education', heading: 'Education', entries: byKind('education') },
+  { id: 'service', heading: 'Leadership and service', entries: byKind('service') },
+].filter((g) => g.entries.length > 0);
+
+const tasteLabels = { music: 'Music', shows: 'Shows, movies, and anime', food: 'Food' } as const;
+const tasteGroups = (Object.keys(tasteLabels) as (keyof typeof tasteLabels)[])
+  .map((category) => ({ category, entries: tastes.filter((t) => t.data.category === category) }))
+  .filter((g) => g.entries.length > 0);
+
+const sections = [
+  { id: 'projects', label: 'Projects', show: projects.length > 0 },
+  ...experienceGroups.map((g) => ({ id: g.id, label: g.heading, show: true })),
+  { id: 'skills', label: 'Skills', show: profile.skills.length > 0 },
+  { id: 'books', label: 'Books', show: books.length > 0 },
+  { id: 'hobbies', label: 'Hobbies', show: hobbies.length > 0 },
+  { id: 'tastes', label: 'Tastes', show: tasteGroups.length > 0 },
+  { id: 'notes', label: 'Notes', show: notes.length > 0 },
+].filter((s) => s.show);
+---
+
+<header class="wrap">
+  <h1>{profile.name}</h1>
+  <p class="tagline">{profile.tagline}</p>
+  {
+    profile.links.length > 0 && (
+      <ul class="inline">
+        {profile.links.map((l) => (
+          <li>
+            <a href={l.url} rel="me">
+              {l.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  <nav aria-label="Sections">
+    <ul class="inline">
+      {sections.map((s) => (
+        <li>
+          <a href={`#${s.id}`}>{s.label}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</header>
+
+<main id="main" class="wrap">
+  {
+    renderedProjects.length > 0 && (
+      <section id="projects">
+        <h2>Projects</h2>
+        {renderedProjects.map(({ entry, Content }) => (
+          <article>
+            <h3>{entry.data.title}</h3>
+            <p class="meta">
+              <time datetime={entry.data.date.toISOString()}>{formatMonth(entry.data.date)}</time>
+              {entry.data.status === 'active' && <> · in progress</>}
+              {entry.data.tags.length > 0 && <> · {entry.data.tags.join(', ')}</>}
+            </p>
+            <p>{entry.data.summary}</p>
+            <Content />
+            {entry.data.links.length > 0 && (
+              <ul class="inline">
+                {entry.data.links.map((l) => (
+                  <li>
+                    <a href={l.url}>{l.label}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+        ))}
+      </section>
+    )
+  }
+
+  {
+    experienceGroups.map(async (group) => (
+      <section id={group.id}>
+        <h2>{group.heading}</h2>
+        {group.entries.map(async (entry) => {
+          const { Content } = await render(entry);
+          return (
+            <article>
+              <h3>
+                {entry.data.title}, <span class="org">{entry.data.org}</span>
+              </h3>
+              <p class="meta">
+                {formatPeriod(entry.data)}
+                {entry.data.location && <> · {entry.data.location}</>}
+              </p>
+              <Content />
+            </article>
+          );
+        })}
+      </section>
+    ))
+  }
+
+  {
+    profile.skills.length > 0 && (
+      <section id="skills">
+        <h2>Skills</h2>
+        <dl>
+          {profile.skills.map((s) => (
+            <>
+              <dt>{s.level}</dt>
+              <dd>{s.items.join(', ')}</dd>
+            </>
+          ))}
+          {profile.languages.length > 0 && (
+            <>
+              <dt>Languages</dt>
+              <dd>{profile.languages.join(', ')}</dd>
+            </>
+          )}
+        </dl>
+      </section>
+    )
+  }
+
+  {
+    books.length > 0 && (
+      <section id="books">
+        <h2>Books</h2>
+        {(['liked', 'to-read'] as const).map((status) => {
+          const list = books.filter((b) => b.data.status === status);
+          return (
+            list.length > 0 && (
+              <>
+                <h3>{status === 'liked' ? 'Liked' : 'To read'}</h3>
+                <ul>
+                  {list.map((b) => (
+                    <li>
+                      <cite>{b.data.title}</cite> by {b.data.author}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )
+          );
+        })}
+      </section>
+    )
+  }
+
+  {
+    hobbies.length > 0 && (
+      <section id="hobbies">
+        <h2>Hobbies</h2>
+        <ul>
+          {hobbies.map((h) => (
+            <li>
+              <strong>{h.data.title}</strong>
+              {h.data.summary && <>: {h.data.summary}</>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    tasteGroups.length > 0 && (
+      <section id="tastes">
+        <h2>Tastes</h2>
+        {tasteGroups.map((g) => (
+          <>
+            <h3>{tasteLabels[g.category]}</h3>
+            <ul>
+              {g.entries.map((t) => (
+                <li>
+                  <strong>{t.data.title}</strong>
+                  {t.data.summary && <>: {t.data.summary}</>}
+                </li>
+              ))}
+            </ul>
+          </>
+        ))}
+      </section>
+    )
+  }
+
+  {
+    notes.length > 0 && (
+      <section id="notes">
+        <h2>Notes</h2>
+        <ul>
+          {notes.map((n) => (
+            <li>
+              <strong>{n.data.title}</strong>
+              {n.data.summary && <>: {n.data.summary}</>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</main>
+
+<style>
+  .wrap {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  header {
+    padding-top: 3rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    margin: 0;
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+  .tagline {
+    margin: 0.5rem 0 1rem;
+    color: var(--muted);
+  }
+  .inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+  }
+  section {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  section:last-child {
+    border-bottom: 0;
+    padding-bottom: 4rem;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 0 0 0.75rem;
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 1.05rem;
+    margin: 1.25rem 0 0;
+  }
+  article > :global(ul) {
+    padding-left: 1.25rem;
+  }
+  .org {
+    font-weight: normal;
+  }
+  .meta {
+    margin: 0.1rem 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0;
+  }
+  dt {
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+  }
+</style>
