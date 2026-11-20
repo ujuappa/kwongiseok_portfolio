@@ -26,6 +26,15 @@ export async function getFeaturedProjects() {
   return featured;
 }
 
+/**
+ * Tags that place an entry in a village building rather than describe it.
+ * Scenes read them; visitors never see them in a tag list.
+ */
+export const INTERNAL_TAGS = new Set(['newsroom']);
+
+/** The tags to show visitors. */
+export const publicTags = (tags: string[]) => tags.filter((t) => !INTERNAL_TAGS.has(t));
+
 export async function getProfile() {
   const profile = await getEntry('profile', 'main');
   if (!profile) throw new Error('src/content/profile.yaml needs an entry with `id: main`.');

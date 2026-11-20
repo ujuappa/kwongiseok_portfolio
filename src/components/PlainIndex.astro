@@ -2,7 +2,7 @@
 // The plain index: a fast, text-first view of every collection.
 // It is the fallback for phones, search engines, and anyone who skips the scenes.
 import { render, type CollectionEntry } from 'astro:content';
-import { formatMonth, formatPeriod, getProfile, getPublished } from '../lib/content';
+import { formatMonth, formatPeriod, getProfile, getPublished, publicTags } from '../lib/content';
 
 const profile = await getProfile();
 const [projects, experience, books, hobbies, tastes, notes] = await Promise.all([
@@ -81,7 +81,7 @@ const sections = [
             <p class="meta">
               <time datetime={entry.data.date.toISOString()}>{formatMonth(entry.data.date)}</time>
               {entry.data.status === 'active' && <> · in progress</>}
-              {entry.data.tags.length > 0 && <> · {entry.data.tags.join(', ')}</>}
+              {publicTags(entry.data.tags).length > 0 && <> · {publicTags(entry.data.tags).join(', ')}</>}
             </p>
             <p>{entry.data.summary}</p>
             <Content />
