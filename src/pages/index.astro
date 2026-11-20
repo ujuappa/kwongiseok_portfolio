@@ -1,13 +1,12 @@
 ---
-// Home. Phase 2 replaces this with the fall (src/scenes/fall/). Until then it
-// shows the plain index, with /map/ as the canonical copy for search engines.
+// Home: the fall. The plain index at /map/ is the text-first alternative.
 import Base from '../layouts/Base.astro';
-import PlainIndex from '../components/PlainIndex.astro';
+import Fall from '../scenes/fall/Fall.astro';
 import { getProfile } from '../lib/content';
 
 const profile = await getProfile();
 ---
 
-<Base title={profile.name} description={profile.tagline} canonicalPath="/map/">
-  <PlainIndex />
+<Base title={profile.name} description={profile.tagline}>
+  <Fall />
 </Base>

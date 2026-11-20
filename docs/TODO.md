@@ -28,11 +28,15 @@ The decisions referenced here are listed in [PLAN.md → Open decisions](PLAN.md
 
 ## Sunday: start phase 2, the fall
 
-- [ ] Build the four beats with placeholder shapes and your real content: airplane, freefall, parachute, landing.
+- [x] Build the four beats with placeholder shapes and your real content: airplane, freefall, parachute, landing.
   - Two placeholder characters. The Jump button stays disabled until one is picked.
   - Landing: the village center, with placeholder buildings around the landing spot.
   - Store the picked character and a "seen the fall" flag in the browser. Returning visitors start at the landing, with a replay button.
-- [ ] Add the "skip to ground" button, the always-visible link to the plain index, and the reduced-motion fallback.
-- [ ] Once the fall is at `/`, remove `canonicalPath="/map/"` from `src/pages/index.astro`.
-- [ ] Test the pacing on your phone, either through the GitHub Pages URL after a push or with `npm run dev -- --host` and your computer's local IP.
+- [x] Add the "skip to ground" button, the always-visible link to the plain index, and the reduced-motion fallback.
+- [x] Once the fall is at `/`, remove `canonicalPath="/map/"` from `src/pages/index.astro`.
+- [x] Lighthouse on `/` (Nov 20, local, mobile): 100 in every category.
+- [ ] Test the pacing on your phone, either through the GitHub Pages URL after a push or with `npm run dev -- --host` and your computer's local IP. Tune `SCROLL_SCREENS` in `src/scenes/fall/fall.ts` (6.5 now) if it feels too long or too short.
+- [ ] Confirm two behaviors I assumed:
+  - Skipping counts as having seen the fall, so the next visit starts at the landing.
+  - Skipping before picking a character lands with no skydiver.
 - [ ] Stretch: write the `add-content` project skill. Write it last, so it describes the schema after Saturday's changes.

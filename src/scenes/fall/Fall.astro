@@ -1,0 +1,873 @@
+---
+// The fall (docs/PLAN.md → The fall): airplane, freefall, parachute, landing.
+//
+// The markup is a complete static summary on its own. That is what visitors
+// see with JavaScript off or with reduced motion turned on. When motion is
+// allowed, fall.ts adds `is-animated` and turns it into the scroll-driven scene.
+import { render } from 'astro:content';
+import Skydiver from './Skydiver.astro';
+import { CHARACTERS } from '../../lib/visitor';
+import {
+  formatMonth,
+  formatPeriod,
+  getFeaturedProjects,
+  getProfile,
+  getPublished,
+  url,
+} from '../../lib/content';
+
+const profile = await getProfile();
+const featured = await getFeaturedProjects();
+const [experience, projects, books, hobbies, tastes, notes] = await Promise.all([
+  getPublished('experience'),
+  getPublished('projects'),
+  getPublished('books'),
+  getPublished('hobbies'),
+  getPublished('tastes'),
+  getPublished('notes'),
+]);
+
+const work = await Promise.all(
+  experience
+    .filter((e) => e.data.kind === 'internship' || e.data.kind === 'work')
+    .map(async (entry) => ({ entry, Content: (await render(entry)).Content })),
+);
+const education = experience.filter((e) => e.data.kind === 'education');
+
+// Landing: the village center. Until phase 3 builds the village, each building
+// opens its section of the plain index, and empty ones say "coming soon".
+const map = (section: string) => url(`/map/#${section}`);
+const buildings = [
+  { place: 'forge', name: 'Forge', holds: 'Projects', href: projects.length ? map('projects') : null },
+  {
+    place: 'newsroom',
+    name: 'Newsroom',
+    holds: 'AI news and markets',
+    href: projects.some((p) => p.data.tags.includes('newsroom')) ? map('projects') : null,
+  },
+  { place: 'library', name: 'Library', holds: 'Books', href: books.length ? map('books') : null },
+  { place: 'garden', name: 'Garden', holds: 'Hobbies', href: hobbies.length ? map('hobbies') : null },
+  {
+    place: 'house',
+    name: 'Pixel house',
+    holds: 'Food, music, shows, notes',
+    href: tastes.length ? map('tastes') : notes.length ? map('notes') : null,
+  },
+  { place: 'mailbox', name: 'Mailbox', holds: 'Contact', href: null },
+  { place: 'lot', name: 'Empty lot', holds: 'Art studio', href: null },
+];
+
+const clouds = [
+  { left: 4, top: 6, size: 190, drift: 38 },
+  { left: 62, top: 14, size: 150, drift: 46 },
+  { left: 30, top: 30, size: 220, drift: 52 },
+  { left: 72, top: 44, size: 170, drift: 41 },
+  { left: 8, top: 58, size: 200, drift: 49 },
+  { left: 55, top: 70, size: 160, drift: 36 },
+  { left: 20, top: 84, size: 210, drift: 44 },
+];
+---
+
+<div class="fall" data-fall>
+  <script is:inline>
+    // Runs before first paint so animated visitors never see the static layout
+    // flash. If fall.ts hasn't marked the scene ready within 4 s (blocked or
+    // failed script), fall back to the static summary.
+    (function () {
+      var fall = document.currentScript.parentElement;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      fall.classList.add('is-animated');
+      setTimeout(function () {
+        if (!fall.classList.contains('is-ready')) fall.classList.remove('is-animated');
+      }, 4000);
+    })();
+  </script>
+
+  <nav class="escape" aria-label="Shortcuts">
+    <a href="#landing" class="skip-ground" data-skip>Skip to ground</a>
+    <button type="button" class="replay" data-replay>Replay the fall</button>
+    <a href={url('/map/')}>Plain index</a>
+  </nav>
+
+  <main id="main" class="stage" data-stage>
+    <div class="sky" aria-hidden="true">
+      <div class="sky-layer sky-high"></div>
+      <div class="sky-layer sky-mid" data-sky-mid></div>
+      <div class="sky-layer sky-low" data-sky-low></div>
+    </div>
+
+    <div class="clouds" aria-hidden="true" data-clouds>
+      {
+        clouds.map((c) => (
+          <svg
+            class="cloud"
+            viewBox="0 0 120 60"
+            style={`left:${c.left}%;top:${c.top}%;width:${c.size}px;animation-duration:${c.drift}s`}
+          >
+            <g fill="#fff">
+              <ellipse cx="40" cy="38" rx="32" ry="18" />
+              <ellipse cx="70" cy="28" rx="30" ry="22" />
+              <ellipse cx="92" cy="40" rx="24" ry="15" />
+            </g>
+          </svg>
+        ))
+      }
+    </div>
+
+    <!-- Beat 1: the airplane carries the name; the visitor picks a skydiver and jumps. -->
+    <section id="airplane" class="beat beat-airplane" aria-labelledby="site-name">
+      <div class="plane-wrap">
+        <div class="plane" data-plane>
+          <div class="plane-body" data-plane-body>
+            <div class="banner"><h1 id="site-name">{profile.name}</h1></div>
+            <span class="rope" aria-hidden="true"></span>
+            <svg class="plane-art" viewBox="0 0 160 64" aria-hidden="true" focusable="false">
+              <path d="M18 22 L30 4 L44 4 L42 24 Z" class="plane-tail"></path>
+              <rect x="14" y="20" width="136" height="26" rx="13" class="plane-hull"></rect>
+              <path d="M70 36 L112 36 L92 60 L78 60 Z" class="plane-wing"></path>
+              <circle cx="108" cy="30" r="4" class="plane-window"></circle>
+              <circle cx="94" cy="30" r="4" class="plane-window"></circle>
+              <circle cx="80" cy="30" r="4" class="plane-window"></circle>
+              <path d="M138 24 Q152 33 138 42 Z" class="plane-nose"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="boarding" data-boarding>
+        <p class="tagline">{profile.tagline}</p>
+        <form class="pick" data-pick hidden>
+          <fieldset>
+            <legend>Pick your skydiver</legend>
+            <div class="pick-options">
+              {
+                CHARACTERS.map((c) => (
+                  <label class="pick-option" style={`--c:${c.color}`}>
+                    <input type="radio" name="character" value={c.id} required />
+                    <Skydiver class="pick-figure" />
+                    <span>{c.label}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+          <button type="submit" class="jump" data-jump disabled>Jump</button>
+          <p class="pick-hint" data-pick-hint>Pick a skydiver to jump.</p>
+        </form>
+      </div>
+    </section>
+
+    <div class="diver" data-diver aria-hidden="true">
+      <svg class="chute" data-chute viewBox="0 0 140 112" focusable="false">
+        <path d="M6 52 Q70 -22 134 52 Q102 40 70 52 Q38 40 6 52 Z" class="chute-canopy"></path>
+        <path d="M70 52 Q86 10 70 -2 Q54 10 70 52 Z" class="chute-stripe"></path>
+        <path d="M8 52 L70 110 M38 47 L70 110 M102 47 L70 110 M132 52 L70 110" class="chute-lines"></path>
+      </svg>
+      <Skydiver class="diver-figure" />
+    </div>
+
+    <p class="scroll-hint" data-scroll-hint aria-hidden="true">Scroll to fall ↓</p>
+
+    <!-- Beat 2: freefall. The featured projects pass as clouds. -->
+    <section id="freefall" class="beat beat-freefall" aria-labelledby="freefall-title">
+      <h2 id="freefall-title" class="beat-title">Featured projects</h2>
+      <ul class="cards">
+        {
+          featured.map((p) => (
+            <li class="card" data-card>
+              <h3>{p.data.title}</h3>
+              <p class="meta">
+                <time datetime={p.data.date.toISOString()}>{formatMonth(p.data.date)}</time>
+              </p>
+              <p>{p.data.summary}</p>
+              {p.data.links.length > 0 && (
+                <p class="card-links">
+                  {p.data.links.map((l) => (
+                    <a href={l.url}>{l.label}</a>
+                  ))}
+                </p>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+      <p class="all-projects"><a href={map('projects')}>All projects</a></p>
+    </section>
+
+    <!-- Beat 3: parachute. The open sky shows experience, education, and skills. -->
+    <section id="parachute" class="beat beat-parachute" aria-labelledby="parachute-title">
+      <div class="panel" data-panel>
+        <div class="panel-scroll" data-panel-scroll>
+          <h2 id="parachute-title">Experience</h2>
+          {
+            work.map(({ entry, Content }) => (
+              <article>
+                <h3>
+                  {entry.data.title}, <span class="org">{entry.data.org}</span>
+                </h3>
+                <p class="meta">
+                  {formatPeriod(entry.data)}
+                  {entry.data.location && <> · {entry.data.location}</>}
+                </p>
+                <Content />
+              </article>
+            ))
+          }
+
+          {
+            education.length > 0 && (
+              <>
+                <h2>Education</h2>
+                {education.map((e) => (
+                  <article>
+                    <h3>
+                      {e.data.title}, <span class="org">{e.data.org}</span>
+                    </h3>
+                    <p class="meta">{formatPeriod(e.data)}</p>
+                  </article>
+                ))}
+              </>
+            )
+          }
+
+          {
+            profile.skills.length > 0 && (
+              <>
+                <h2>Skills</h2>
+                <dl>
+                  {profile.skills.map((s) => (
+                    <>
+                      <dt>{s.area}</dt>
+                      <dd>{s.items.join(', ')}</dd>
+                    </>
+                  ))}
+                </dl>
+              </>
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Beat 4: landing in the middle of the village, surrounded by the buildings. -->
+    <section id="landing" class="beat beat-landing" aria-labelledby="landing-title">
+      <div class="ground" data-ground>
+        <h2 id="landing-title" tabindex="-1">The village</h2>
+        <p class="landing-intro">Each building holds one part of the site.</p>
+        <ul class="buildings">
+          {
+            buildings.map((b) => (
+              <li class="building" data-place={b.place}>
+                {b.href ? (
+                  <a href={b.href}>
+                    <strong>{b.name}</strong>
+                    <span class="holds">{b.holds}</span>
+                  </a>
+                ) : (
+                  <div class="closed">
+                    <strong>{b.name}</strong>
+                    <span class="holds">{b.holds}</span>
+                    <span class="soon">Coming soon</span>
+                  </div>
+                )}
+              </li>
+            ))
+          }
+          <li class="landing-spot" data-spot aria-hidden="true"></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  import './fall';
+</script>
+
+<style>
+  /* ---------- Static summary (no JS, or reduced motion) ---------- */
+  .escape {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.25rem 1.25rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .replay {
+    display: none;
+    font: inherit;
+    color: var(--accent);
+    background: none;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .stage {
+    display: block;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+  .sky,
+  .clouds,
+  .diver,
+  .scroll-hint,
+  .landing-spot {
+    display: none;
+  }
+  .beat {
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .beat:last-child {
+    border-bottom: 0;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 0 0 0.75rem;
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 1.05rem;
+    margin: 1rem 0 0;
+  }
+  .meta {
+    margin: 0.1rem 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .org {
+    font-weight: normal;
+  }
+
+  .plane-body {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .banner {
+    padding: 0.35rem 0.9rem;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+    border-radius: 0.4rem;
+  }
+  .banner h1 {
+    margin: 0;
+    font-size: clamp(1.4rem, 5vw, 2.25rem);
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+  .rope {
+    width: 1.5rem;
+    border-top: 2px dashed var(--muted);
+  }
+  .plane-art {
+    width: clamp(6.5rem, 22vw, 10rem);
+    flex: none;
+  }
+  .plane-hull,
+  .plane-tail,
+  .plane-wing {
+    fill: #f8fafc;
+    stroke: #334155;
+    stroke-width: 2;
+  }
+  .plane-nose {
+    fill: var(--accent);
+  }
+  .plane-window {
+    fill: #38bdf8;
+  }
+  .tagline {
+    margin: 1rem 0 0;
+    color: var(--muted);
+  }
+
+  .pick fieldset {
+    border: 0;
+    padding: 0;
+    margin: 1.25rem 0 0.75rem;
+  }
+  .pick legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .pick-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .pick-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 8.5rem;
+    padding: 0.6rem 0.9rem;
+    border: 2px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .pick-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .pick-option:has(input:checked) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .pick-option:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .pick-option :global(.pick-figure) {
+    width: 2.5rem;
+    height: 3.25rem;
+    color: var(--c);
+  }
+  .jump {
+    font: inherit;
+    font-weight: 700;
+    padding: 0.55rem 1.6rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .jump:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .jump:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 3px;
+  }
+  .pick-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .has-character .pick-hint {
+    visibility: hidden;
+  }
+
+  .cards {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .card {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .card h3 {
+    margin: 0;
+  }
+  .card p {
+    margin: 0.25rem 0 0;
+  }
+  .card-links {
+    display: flex;
+    gap: 1rem;
+  }
+  .panel :global(ul) {
+    padding-left: 1.25rem;
+    margin: 0.25rem 0 0;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0;
+  }
+  dt {
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+  }
+
+  .buildings {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: 0.75rem;
+  }
+  .building > a,
+  .building > .closed {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.6rem;
+    background: var(--bg);
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .building > a:hover strong,
+  .building > a:focus-visible strong {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+  .holds,
+  .soon {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .soon {
+    font-style: italic;
+  }
+  .landing-intro {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  /* ---------- The animated scene ---------- */
+  .is-animated .escape {
+    position: fixed;
+    top: 0.75rem;
+    right: 0.75rem;
+    left: auto;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+  }
+  .is-animated.is-landed .skip-ground,
+  .is-animated.is-down .skip-ground {
+    display: none;
+  }
+  .is-animated.is-landed .replay,
+  .is-animated.is-down .replay {
+    display: inline;
+  }
+
+  .is-animated .stage {
+    position: relative;
+    max-width: none;
+    height: 100svh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  /* Hidden until fall.ts has positioned everything, so nothing jumps on load. */
+  .is-animated:not(.is-ready) .stage > :not(.sky) {
+    visibility: hidden;
+  }
+  .is-animated .sky,
+  .is-animated .clouds,
+  .is-animated .diver,
+  .is-animated .landing-spot {
+    display: block;
+  }
+  .sky-layer {
+    position: absolute;
+    inset: 0;
+  }
+  .is-animated .sky {
+    position: absolute;
+    inset: 0;
+  }
+  .sky-high {
+    background: linear-gradient(#1e3a8a, #3b82f6);
+  }
+  .sky-mid {
+    background: linear-gradient(#3b82f6, #bae6fd);
+  }
+  .sky-low {
+    background: linear-gradient(#7dd3fc, #fef3c7);
+  }
+  .is-animated .clouds {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 320%;
+  }
+  .cloud {
+    position: absolute;
+    opacity: 0.85;
+    animation: drift 40s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    to {
+      transform: translateX(-12vw);
+    }
+  }
+
+  .is-animated .beat {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+  }
+  .is-animated .plane,
+  .is-animated .boarding,
+  .is-animated .card,
+  .is-animated .panel,
+  .is-animated .ground {
+    pointer-events: auto;
+  }
+  .is-animated .beat-title,
+  .is-animated .all-projects,
+  .is-animated .landing-intro {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .is-animated .plane-wrap {
+    position: absolute;
+    top: 9svh;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .is-animated .banner {
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.2);
+  }
+  .is-animated .rope {
+    border-top-color: #e2e8f0;
+  }
+  .is-animated .boarding {
+    position: absolute;
+    top: 30svh;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: min(30rem, 92vw);
+    padding: 1rem 1.25rem 1.1rem;
+    border-radius: 1.25rem;
+    background: var(--bg);
+    box-shadow: 0 10px 30px rgb(15 23 42 / 0.25);
+    text-align: center;
+  }
+  .is-animated .tagline {
+    margin: 0;
+  }
+  .is-animated .pick-options {
+    justify-content: center;
+  }
+  .is-animated:not(.is-boarding) .boarding {
+    pointer-events: none;
+  }
+
+  .is-animated .diver {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 3.5rem;
+    margin: 0 auto;
+    z-index: 5;
+    color: var(--diver, #ea580c);
+  }
+  .is-animated.is-boarding .diver,
+  .is-animated.is-landed:not(.has-character) .diver {
+    visibility: hidden;
+  }
+  .diver :global(.diver-figure) {
+    display: block;
+    width: 100%;
+  }
+  .chute {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    width: 8.5rem;
+    margin-left: -4.25rem;
+    margin-bottom: -1.75rem;
+    overflow: visible;
+  }
+  .chute-canopy {
+    fill: var(--accent);
+  }
+  .chute-stripe {
+    fill: #fff;
+    opacity: 0.85;
+  }
+  .chute-lines {
+    stroke: #e2e8f0;
+    stroke-width: 1.5;
+    fill: none;
+  }
+
+  .scroll-hint {
+    margin: 0;
+  }
+  .is-animated.is-falling .scroll-hint {
+    display: block;
+    position: absolute;
+    bottom: 1.5rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+  }
+
+  .is-animated .cards {
+    position: absolute;
+    inset: 0;
+  }
+  .is-animated .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: min(26rem, 88vw);
+    margin: 0 auto;
+    border: 0;
+    border-radius: 2rem;
+    padding: 1.1rem 1.5rem 1.25rem;
+    box-shadow:
+      0 0 0 6px rgb(255 255 255 / 0.55),
+      0 12px 30px rgb(15 23 42 / 0.25);
+  }
+
+  .is-animated .panel {
+    position: absolute;
+    top: 30svh;
+    left: 0;
+    right: 0;
+    width: min(34rem, 92vw);
+    height: 62svh;
+    margin: 0 auto;
+    overflow: hidden;
+    padding: 0 1.25rem;
+    border-radius: 1.25rem;
+    background: var(--bg);
+    box-shadow: 0 12px 30px rgb(15 23 42 / 0.25);
+  }
+  .is-animated .panel-scroll {
+    padding: 1rem 0 2rem;
+  }
+  .is-animated .panel h2 {
+    margin-top: 1rem;
+  }
+
+  .is-animated .ground {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 62svh;
+    padding: 0.9rem 1rem 1rem;
+    border-radius: 50% 50% 0 0 / 2.5rem 2.5rem 0 0;
+    background: linear-gradient(#a3e635, #4d7c0f);
+  }
+  .is-animated #landing-title {
+    width: fit-content;
+    margin: 0 auto;
+    padding: 0.15rem 0.9rem;
+    border-radius: 999px;
+    background: var(--bg);
+    font-size: 1rem;
+  }
+  .is-animated .buildings {
+    position: relative;
+    max-width: 40rem;
+    height: calc(100% - 2.5rem);
+    margin: 0.75rem auto 0;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-areas:
+      'forge newsroom library'
+      'garden spot house'
+      'lot mailbox .';
+    gap: 0.6rem;
+  }
+  .is-animated .building[data-place='forge'] {
+    grid-area: forge;
+  }
+  .is-animated .building[data-place='newsroom'] {
+    grid-area: newsroom;
+  }
+  .is-animated .building[data-place='library'] {
+    grid-area: library;
+  }
+  .is-animated .building[data-place='garden'] {
+    grid-area: garden;
+  }
+  .is-animated .building[data-place='house'] {
+    grid-area: house;
+  }
+  .is-animated .building[data-place='lot'] {
+    grid-area: lot;
+  }
+  .is-animated .building[data-place='mailbox'] {
+    grid-area: mailbox;
+  }
+  .is-animated .building > a,
+  .is-animated .building > .closed {
+    justify-content: flex-end;
+    border: 0;
+    border-radius: 0.3rem;
+    box-shadow: 0 6px 14px rgb(20 40 10 / 0.35);
+    position: relative;
+    margin-top: 1rem;
+    height: calc(100% - 1rem);
+  }
+  /* Placeholder roof. Real building art arrives with phase 3. */
+  .is-animated .building > a::before,
+  .is-animated .building > .closed::before {
+    content: '';
+    position: absolute;
+    left: -0.3rem;
+    right: -0.3rem;
+    bottom: 100%;
+    height: 1.1rem;
+    background: var(--accent);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+  .is-animated .building > .closed::before {
+    background: var(--muted);
+  }
+  .is-animated .landing-spot {
+    grid-area: spot;
+    align-self: end;
+    justify-self: center;
+    width: 4.5rem;
+    height: 1.25rem;
+    margin-bottom: 0.5rem;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.3);
+    border: 2px dashed rgb(255 255 255 / 0.85);
+  }
+  @media (max-width: 30rem) {
+    .is-animated .holds {
+      display: none;
+    }
+    .is-animated .building > a,
+    .is-animated .building > .closed {
+      padding: 0.4rem 0.5rem;
+      font-size: 0.8rem;
+    }
+  }
+</style>
