@@ -1,0 +1,234 @@
+<!doctype html>
+<!--
+  Character art preview. process.py fills in the data and writes preview.html.
+  Serve the repo root (python -m http.server 8765) and open
+  http://localhost:8765/scripts/characters/preview.html
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Character preview</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        color: #1e293b;
+        background: #f1f5f9;
+      }
+      body {
+        margin: 0 auto;
+        padding: 1rem;
+        max-width: 72rem;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      h2 {
+        margin: 2rem 0 0.5rem;
+        font-size: 1.2rem;
+      }
+      h3 {
+        margin: 1rem 0 0.4rem;
+        font-size: 0.95rem;
+        color: #475569;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+      @media (max-width: 40rem) {
+        .pair {
+          grid-template-columns: 1fr;
+        }
+      }
+      .bg {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 1.5rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+      .light {
+        background: #fff;
+      }
+      .dark {
+        background: #111827;
+        color: #e5e7eb;
+      }
+      .sky {
+        background: linear-gradient(#3b82f6, #bae6fd);
+      }
+      img {
+        display: block;
+      }
+      figure {
+        margin: 0;
+        text-align: center;
+        font-size: 0.75rem;
+      }
+      /* Fall poses side by side, each placed so the faces line up. */
+      .poses {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+      .poses img {
+        position: absolute;
+      }
+      .poses .line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 1px dashed #ef4444;
+      }
+      .walk {
+        position: relative;
+        image-rendering: auto;
+      }
+      .walk .sprite {
+        background-repeat: no-repeat;
+      }
+      .walk .shadow {
+        position: absolute;
+        left: 50%;
+        border-radius: 50%;
+        background: rgb(0 0 0 / 0.25);
+        transform: translate(-50%, -50%);
+      }
+      .walk .feet {
+        position: absolute;
+        left: -8px;
+        right: -8px;
+        border-top: 1px solid #ef4444;
+      }
+      .note {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Character preview</h1>
+    <p class="note">
+      Every processed image on light, dark and sky backgrounds. Fall poses are drawn at one scale
+      and lined up on the face (dashed line). Walk cycles play at the sheet's frame rate; the red line
+      is the ground, so the feet should stay on it.
+    </p>
+    <div id="out"></div>
+    <script>
+      const ART = /*ART*/null;
+      const base = '../../public/';
+      const out = document.getElementById('out');
+      const el = (tag, attrs = {}, kids = []) => {
+        const n = document.createElement(tag);
+        for (const [k, v] of Object.entries(attrs)) {
+          if (k === 'style') Object.assign(n.style, v);
+          else n.setAttribute(k, v);
+        }
+        for (const k of [].concat(kids)) n.append(k);
+        return n;
+      };
+      const backgrounds = ['light', 'dark', 'sky'];
+      const scale = 0.5;
+
+      for (const [id, art] of Object.entries(ART)) {
+        out.append(el('h2', {}, id));
+
+        if (art.portrait) {
+          out.append(el('h3', {}, `Portrait${art.portrait.temporary ? ' (temporary: front view of the turnaround)' : ''}`));
+          const row = el('div', { class: 'pair' });
+          for (const b of backgrounds.slice(0, 2)) {
+            row.append(
+              el('div', { class: `bg ${b}` }, [
+                el('img', { src: base + art.portrait.src, width: art.portrait.w / 2 }),
+                el('img', { src: base + art.portrait.src, width: art.portrait.w / 4 }),
+              ]),
+            );
+          }
+          out.append(row);
+        }
+
+        if (art.fall) {
+          out.append(el('h3', {}, 'Fall poses: freefall, parachute, landing (same face size)'));
+          const row = el('div', { class: 'pair' });
+          for (const b of backgrounds.slice(1)) {
+            const box = el('div', { class: `bg ${b}` });
+            const poses = el('div', { class: 'poses' });
+            const headY = 90;
+            let x = 10;
+            for (const name of ['freefall', 'parachute', 'landing']) {
+              const p = art.fall[name];
+              poses.append(
+                el('img', {
+                  src: base + p.src,
+                  width: p.w * scale,
+                  style: { left: `${x}px`, top: `${headY - p.head[1] * scale}px` },
+                }),
+              );
+              x += p.w * scale + 10;
+            }
+            poses.append(el('div', { class: 'line', style: { top: `${headY}px` } }));
+            box.append(poses);
+            row.append(box);
+          }
+          out.append(row);
+        }
+
+        if (art.walk) {
+          const w = art.walk;
+          const [cw, ch] = w.cell;
+          out.append(el('h3', {}, `Walk cycles at ${w.fps} fps: down, left, right (left flipped), up; then idle`));
+          const row = el('div', { class: 'pair' });
+          for (const b of backgrounds.slice(0, 2)) {
+            const box = el('div', { class: `bg ${b}` });
+            const rows = [0, 1, 1, 2];
+            rows.forEach((r, i) => {
+              const flip = i === 2;
+              const s = 0.6;
+              const sprite = el('div', {
+                class: 'sprite',
+                style: {
+                  width: `${cw * s}px`,
+                  height: `${ch * s}px`,
+                  backgroundImage: `url(${base + w.src})`,
+                  backgroundSize: `${cw * w.cols * s}px ${ch * w.rows * s}px`,
+                  transform: flip ? 'scaleX(-1)' : '',
+                },
+              });
+              sprite.dataset.row = r;
+              sprite.dataset.s = s;
+              const shadowW = cw * s * 0.55;
+              const wrap = el('div', { class: 'walk' }, [
+                el('div', {
+                  class: 'shadow',
+                  style: { top: `${w.anchor[1] * s}px`, width: `${shadowW}px`, height: `${shadowW * 0.3}px` },
+                }),
+                sprite,
+                el('div', { class: 'feet', style: { top: `${w.anchor[1] * s}px` } }),
+              ]);
+              box.append(wrap);
+            });
+            box.append(el('img', { src: base + w.src, width: (cw * w.cols) / 3 }));
+            row.append(box);
+          }
+          out.append(row);
+        }
+      }
+
+      // Walk animation: columns 1-2-3-4 at the sheet's fps.
+      let frame = 0;
+      setInterval(() => {
+        frame = (frame + 1) % 4;
+        for (const s of document.querySelectorAll('.sprite')) {
+          const id = Object.keys(ART).find((k) => s.style.backgroundImage.includes(k));
+          const [cw, ch] = ART[id].walk.cell;
+          const k = Number(s.dataset.s);
+          s.style.backgroundPosition = `${-frame * cw * k}px ${-s.dataset.row * ch * k}px`;
+        }
+      }, 1000 / 8);
+    </script>
+  </body>
+</html>

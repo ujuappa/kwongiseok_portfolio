@@ -1,0 +1,25 @@
+{
+  "src": "assets/characters/visitor-01/walk.png",
+  "rows": 3,
+  "cols": 4,
+  "cell": [
+    128,
+    176
+  ],
+  "anchor": [
+    64.0,
+    174.0
+  ],
+  "rowNames": [
+    "down",
+    "left",
+    "up"
+  ],
+  "colNames": [
+    "stand",
+    "stepA",
+    "stand",
+    "stepB"
+  ],
+  "fps": 8
+}

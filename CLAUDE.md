@@ -14,7 +14,7 @@ The site has three layers, and all of them read the same content files:
 
 Phase 1, Foundation, is done: Astro, the content collections, the plain index, and the GitHub Pages deploy.
 
-Phase 2, the fall, is in progress. The four beats run at `/` with placeholder shapes and real content. What's left: pacing tested on a real phone, and real art. Work on one phase at a time, in the order in docs/PLAN.md → Build phases. Don't start a scene unless asked.
+Phase 2, the fall, is in progress. The four beats run at `/` with real content and the two visitor characters' art; the plane, clouds, and village are still placeholder shapes. What's left: pacing tested on a real phone, and the rest of the art. Work on one phase at a time, in the order in docs/PLAN.md → Build phases. Don't start a scene unless asked.
 
 ## Commands
 
@@ -47,7 +47,10 @@ Astro 7 needs Node 22.23.4 or newer.
   - **Static first.** `Fall.astro` is a complete static summary that works without JavaScript and is what reduced-motion visitors see. An inline script adds `is-animated` before first paint, and `fall.ts` turns the page into the scene. Scene-only CSS sits under `.is-animated`.
   - **States.** `fall.ts` switches between three classes: `is-boarding`, `is-falling` (ScrollTrigger pins and scrubs one timeline), and `is-landed`.
   - **Resets.** Reset the timeline with `park()`, never `invalidate().progress()`. Invalidated tweens don't redraw when rewound.
-  - **Pacing.** `SCROLL_SCREENS` in `fall.ts` sets the scroll length.
+  - **Explicit starts.** Every tween on the scrubbed timeline is a `fromTo` (instant changes use `flip()`). A `to()` or `set()` records whatever is on screen when it first runs, and after a ScrollTrigger refresh that can be the end state.
+  - **Pacing.** `SCROLL_SCREENS` in `fall.ts` sets the scroll length (3 screens, per the art handoff).
+  - **The diver** is `Diver.astro`: three drawn poses per character, the canopy drawn in code above the harness straps, and the village sprite the landing turns into. Its origin is the face, so pose swaps keep the face still.
+- **Characters:** `src/lib/characters.ts` is the one list of characters. The art lives in `characters/<id>/source/` (never edited) and `python scripts/characters/process.py` cuts it out into `public/assets/characters/<id>/` and writes the measurements to `src/lib/character-art.json`. It also writes `scripts/characters/preview.html` for checking the art. Missing art falls back to the placeholder figure. The handoff is `characters/character-assets-handoff.md`.
 - **Visitor state:** the picked character and the "seen the fall" flag are in `src/lib/visitor.ts`, stored in `localStorage` under `kg:` keys. The village and pixel house read the same helpers. The inline script in `Fall.astro` repeats the `kg:fall-seen` key name, so change both together.
 - **Layout:** follow the folder layout in docs/PLAN.md → Architecture. Scenes go in `src/scenes/<name>/`, shared UI in `src/components/`, and sprites, tiles, and audio in `public/assets/`.
 - **Styles:** the village is not pixel art. Only the pixel house is pixel art, and only the library is 3D. The mismatch is deliberate.

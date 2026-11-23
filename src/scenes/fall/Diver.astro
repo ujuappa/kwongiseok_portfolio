@@ -1,0 +1,268 @@
+---
+// The skydiver for every character: freefall, parachute and landing poses, the
+// canopy (drawn here, above the harness straps), and the village sprite the
+// landing turns into. fall.ts shows the picked character's block and animates it.
+//
+// Everything is sized in the art's own pixels and scaled by --u (fall poses)
+// and --su (village sprite), set in Fall.astro. The block's origin is the
+// face centre, so a pose change keeps the face still.
+// A character missing some art gets the placeholder figure instead.
+import Skydiver from './Skydiver.astro';
+import { CHARACTERS, type Fall, type Pose } from '../../lib/characters';
+
+// Placeholder poses, in the same units as real art.
+const PLACEHOLDER: Fall = {
+  freefall: { src: '', w: 120, h: 160, head: [60, 25] },
+  parachute: { src: '', w: 120, h: 160, head: [60, 25], straps: [[12, 4], [108, 4]] },
+  landing: { src: '', w: 120, h: 160, head: [60, 25] },
+};
+
+/** Canopy above the straps, in parachute-image pixels (y = 0 is the image's top edge). */
+function canopy(p: Fall['parachute']) {
+  const [left, right] = [p.straps[0][0], p.straps[p.straps.length - 1][0]];
+  const span = Math.max(right - left, 40);
+  const mid = (left + right) / 2;
+  const width = span * 2.3;
+  const rim = span * 1.45; // height of the lines from strap to canopy edge
+  const dome = width * 0.3;
+  const x0 = mid - width / 2;
+  const pad = 6;
+  const box = { x: x0 - pad, y: -(rim + dome + pad), w: width + pad * 2, h: rim + dome + pad };
+  // Scalloped lower edge: four points across, dipping between them.
+  const edge = [0, 1, 2, 3].map((i) => x0 + (width * i) / 3);
+  const dip = -rim + dome * 0.16;
+  const top = -rim - dome * 2;
+  const scallops = [3, 2, 1, 0]
+    .slice(1)
+    .map((i) => `Q ${(edge[i] + edge[i + 1]) / 2} ${dip} ${edge[i]} ${-rim}`)
+    .join(' ');
+  const shell = `M ${edge[0]} ${-rim} Q ${mid} ${top} ${edge[3]} ${-rim} ${scallops} Z`;
+  const gore = `M ${mid} ${-rim - dome} Q ${mid - width * 0.12} ${-rim - dome * 0.4} ${edge[1]} ${-rim} Q ${(edge[1] + edge[2]) / 2} ${dip} ${edge[2]} ${-rim} Q ${mid + width * 0.12} ${-rim - dome * 0.4} ${mid} ${-rim - dome} Z`;
+  const lines = edge
+    .map((x, i) => `M ${x} ${-rim + 1} L ${i < 2 ? left : right} 0`)
+    .join(' ');
+  return { box, shell, gore, lines, pivot: [mid, -rim - dome] };
+}
+
+const PUFFS = Array.from({ length: 7 });
+
+const vars = (o: Record<string, number>) =>
+  Object.entries(o)
+    .map(([k, v]) => `--${k}:${Math.round(v * 10) / 10}`)
+    .join(';');
+
+const poseStyle = (p: Pose) => vars({ w: p.w, h: p.h, hx: p.head[0], hy: p.head[1] });
+---
+
+<div class="diver" data-diver aria-hidden="true">
+  <div class="diver-pop" data-pop>
+    {
+      CHARACTERS.filter((c) => c.role === 'visitor').map((c) => {
+        const fall = c.fall ?? PLACEHOLDER;
+        const chute = canopy(fall.parachute);
+        const { landing } = fall;
+        const walk = c.walk;
+        // The village sprite stands where the landing pose's feet are.
+        const feet = { x: landing.w / 2 - landing.head[0], y: landing.h - landing.head[1] };
+        return (
+          <div
+            class="diver-char"
+            data-char={c.id}
+            style={`--c:${c.color};` + vars({ fx: feet.x, fy: feet.y })}
+            hidden
+          >
+            {(['freefall', 'parachute', 'landing'] as const).map((name) => {
+              const p = fall[name];
+              const keep = name === 'landing' && !walk;
+              return (
+                <div
+                  class={`pose pose-${name}`}
+                  data-pose={name}
+                  data-keep={keep ? '' : undefined}
+                  style={
+                    poseStyle(p) +
+                    (name === 'parachute'
+                      ? ';' + vars({ ox: chute.pivot[0], oy: chute.pivot[1] })
+                      : '')
+                  }
+                >
+                  {name === 'parachute' && (
+                    <svg
+                      class="canopy"
+                      data-canopy
+                      viewBox={`${chute.box.x} ${chute.box.y} ${chute.box.w} ${chute.box.h}`}
+                      style={vars({ cx: chute.box.x, cy: chute.box.y, cw: chute.box.w, ch: chute.box.h })}
+                      focusable="false"
+                    >
+                      <path d={chute.lines} class="canopy-lines" />
+                      <path d={chute.shell} class="canopy-shell" />
+                      <path d={chute.gore} class="canopy-gore" />
+                    </svg>
+                  )}
+                  {c.fall ? (
+                    <img src={p.src} width={p.w} height={p.h} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <Skydiver class="pose-placeholder" />
+                  )}
+                </div>
+              );
+            })}
+            {walk && (
+              <div
+                class="sprite"
+                data-sprite
+                style={vars({
+                  sw: walk.cell[0],
+                  sh: walk.cell[1],
+                  ax: walk.anchor[0],
+                  ay: walk.anchor[1],
+                  cols: walk.cols,
+                  rows: walk.rows,
+                }) + `;--sheet:url('${walk.src}')`}
+              >
+                <span class="sprite-shadow" />
+                <span class="sprite-frame" />
+              </div>
+            )}
+            <div class="dust">
+              <span class="flash" data-flash />
+              {PUFFS.map(() => (
+                <span class="puff" data-puff />
+              ))}
+            </div>
+          </div>
+        );
+      })
+    }
+  </div>
+</div>
+
+<style>
+  /* Origin = face centre. fall.ts moves it with x and y. */
+  .diver {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0;
+    height: 0;
+    z-index: 5;
+    /* Fall-pose scale: screen px per art px. Sized so the parachute and its
+       canopy fit in the top half of the screen above the experience panel. */
+    --u: min(0.5px, 0.046svh);
+    /* Village sprite scale. */
+    --su: min(0.42px, 0.05svh);
+  }
+  .diver-pop,
+  .diver-char {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .diver-char {
+    color: var(--c);
+  }
+  .diver-char[hidden] {
+    display: none;
+  }
+  .pose {
+    position: absolute;
+    left: calc(var(--hx) * -1 * var(--u));
+    top: calc(var(--hy) * -1 * var(--u));
+    width: calc(var(--w) * var(--u));
+    height: calc(var(--h) * var(--u));
+    transform-origin: calc(var(--hx) * var(--u)) calc(var(--hy) * var(--u));
+  }
+  .pose-parachute {
+    /* Swings from the top of the canopy. */
+    transform-origin: calc(var(--ox) * var(--u)) calc(var(--oy) * var(--u));
+  }
+  .pose img,
+  .pose :global(.pose-placeholder) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .canopy {
+    position: absolute;
+    left: calc(var(--cx) * var(--u));
+    top: calc(var(--cy) * var(--u));
+    width: calc(var(--cw) * var(--u));
+    height: calc(var(--ch) * var(--u));
+    overflow: visible;
+    transform-origin: 50% 100%;
+  }
+  .canopy-shell {
+    fill: var(--accent);
+    stroke: #3b2f2f;
+    stroke-width: 2px;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+  }
+  .canopy-gore {
+    fill: #fff;
+    opacity: 0.85;
+  }
+  .canopy-lines {
+    stroke: #3b2f2f;
+    stroke-width: 1.25px;
+    vector-effect: non-scaling-stroke;
+    fill: none;
+  }
+
+  /* Village sprite: feet on the landing pose's feet. Idle frame = row 1, column 1. */
+  .sprite {
+    position: absolute;
+    left: calc(var(--fx) * var(--u));
+    top: calc(var(--fy) * var(--u));
+    width: 0;
+    height: 0;
+  }
+  .sprite-frame {
+    position: absolute;
+    left: calc(var(--ax) * -1 * var(--su));
+    top: calc(var(--ay) * -1 * var(--su));
+    width: calc(var(--sw) * var(--su));
+    height: calc(var(--sh) * var(--su));
+    background: var(--sheet) 0 0 / calc(var(--sw) * var(--cols) * var(--su))
+      calc(var(--sh) * var(--rows) * var(--su)) no-repeat;
+  }
+  .sprite-shadow {
+    position: absolute;
+    left: calc(var(--sw) * -0.27 * var(--su));
+    top: calc(var(--sw) * -0.08 * var(--su));
+    width: calc(var(--sw) * 0.54 * var(--su));
+    height: calc(var(--sw) * 0.16 * var(--su));
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(20 40 10 / 0.45), rgb(20 40 10 / 0));
+  }
+
+  /* Dust burst and flash at the feet, covering the landing pose turning into the sprite. */
+  .dust {
+    position: absolute;
+    left: calc(var(--fx) * var(--u));
+    top: calc(var(--fy) * var(--u));
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .flash {
+    position: absolute;
+    left: -5rem;
+    top: -7rem;
+    width: 10rem;
+    height: 10rem;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #fff 35%, rgb(255 255 255 / 0));
+    visibility: hidden;
+  }
+  .puff {
+    position: absolute;
+    left: -1.1rem;
+    top: -1.6rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, #fff8e8 55%, rgb(255 248 232 / 0));
+    visibility: hidden;
+  }
+</style>

@@ -1,13 +1,7 @@
 // Visitor state: kept in the browser only, with no accounts and no server
 // (docs/PLAN.md → Architecture). The village and pixel house read the same keys.
-
-/** Placeholder characters. Each will later need falling, parachute, and walking sprites. */
-export const CHARACTERS = [
-  { id: 'orange', label: 'Orange skydiver', color: '#ea580c' },
-  { id: 'teal', label: 'Teal skydiver', color: '#0d9488' },
-] as const;
-
-export type CharacterId = (typeof CHARACTERS)[number]['id'];
+// The characters themselves are listed in ./characters.ts.
+import { VISITORS, type CharacterId } from './characters';
 
 const KEYS = { character: 'kg:character', fallSeen: 'kg:fall-seen' } as const;
 
@@ -31,7 +25,7 @@ function write(key: string, value: string) {
 
 export function getCharacter(): CharacterId | null {
   const id = read(KEYS.character);
-  return CHARACTERS.some((c) => c.id === id) ? (id as CharacterId) : null;
+  return VISITORS.some((c) => c.id === id) ? (id as CharacterId) : null;
 }
 
 export const setCharacter = (id: CharacterId) => write(KEYS.character, id);

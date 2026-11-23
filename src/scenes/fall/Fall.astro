@@ -5,8 +5,9 @@
 // see with JavaScript off or with reduced motion turned on. When motion is
 // allowed, fall.ts adds `is-animated` and turns it into the scroll-driven scene.
 import { render } from 'astro:content';
+import Diver from './Diver.astro';
 import Skydiver from './Skydiver.astro';
-import { CHARACTERS } from '../../lib/visitor';
+import { VISITORS } from '../../lib/characters';
 import {
   formatMonth,
   formatPeriod,
@@ -56,6 +57,13 @@ const buildings = [
   { place: 'mailbox', name: 'Mailbox', holds: 'Contact', href: null },
   { place: 'lot', name: 'Empty lot', holds: 'Art studio', href: null },
 ];
+
+// Wind streaks rushing past during freefall.
+const winds = [8, 19, 27, 38, 52, 61, 70, 81, 90].map((left, i) => ({
+  left,
+  dur: 0.55 + ((i * 37) % 5) * 0.09,
+  delay: -((i * 53) % 7) * 0.11,
+}));
 
 const clouds = [
   { left: 4, top: 6, size: 190, drift: 38 },
@@ -141,11 +149,21 @@ const clouds = [
             <legend>Pick your skydiver</legend>
             <div class="pick-options">
               {
-                CHARACTERS.map((c) => (
+                VISITORS.map((c) => (
                   <label class="pick-option" style={`--c:${c.color}`}>
                     <input type="radio" name="character" value={c.id} required />
-                    <Skydiver class="pick-figure" />
-                    <span>{c.label}</span>
+                    {c.portrait ? (
+                      <img
+                        class="pick-figure"
+                        src={c.portrait.src}
+                        width={c.portrait.w}
+                        height={c.portrait.h}
+                        alt={c.description}
+                      />
+                    ) : (
+                      <Skydiver class="pick-figure pick-placeholder" />
+                    )}
+                    <span>{c.name}</span>
                   </label>
                 ))
               }
@@ -157,14 +175,11 @@ const clouds = [
       </div>
     </section>
 
-    <div class="diver" data-diver aria-hidden="true">
-      <svg class="chute" data-chute viewBox="0 0 140 112" focusable="false">
-        <path d="M6 52 Q70 -22 134 52 Q102 40 70 52 Q38 40 6 52 Z" class="chute-canopy"></path>
-        <path d="M70 52 Q86 10 70 -2 Q54 10 70 52 Z" class="chute-stripe"></path>
-        <path d="M8 52 L70 110 M38 47 L70 110 M102 47 L70 110 M132 52 L70 110" class="chute-lines"></path>
-      </svg>
-      <Skydiver class="diver-figure" />
+    <div class="wind" data-wind aria-hidden="true">
+      {winds.map((w) => <span style={`left:${w.left}%;animation-duration:${w.dur}s;animation-delay:${w.delay}s`} />)}
     </div>
+
+    <Diver />
 
     <p class="scroll-hint" data-scroll-hint aria-hidden="true">Scroll to fall ↓</p>
 
@@ -316,7 +331,8 @@ const clouds = [
   }
   .sky,
   .clouds,
-  .diver,
+  .wind,
+  .fall :global(.diver),
   .scroll-hint,
   .landing-spot {
     display: none;
@@ -431,8 +447,12 @@ const clouds = [
     outline-offset: 3px;
   }
   .pick-option :global(.pick-figure) {
-    width: 2.5rem;
-    height: 3.25rem;
+    display: block;
+    width: auto;
+    height: 7rem;
+  }
+  .pick-option :global(.pick-placeholder) {
+    width: 5rem;
     color: var(--c);
   }
   .jump {
@@ -576,7 +596,8 @@ const clouds = [
   }
   .is-animated .sky,
   .is-animated .clouds,
-  .is-animated .diver,
+  .is-animated .wind,
+  .is-animated :global(.diver),
   .is-animated .landing-spot {
     display: block;
   }
@@ -677,44 +698,36 @@ const clouds = [
     pointer-events: none;
   }
 
-  .is-animated .diver {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 3.5rem;
-    margin: 0 auto;
-    z-index: 5;
-    color: var(--diver, #ea580c);
-  }
-  .is-animated.is-boarding .diver,
-  .is-animated.is-landed:not(.has-character) .diver {
+  .is-animated.is-boarding :global(.diver),
+  .is-animated.is-landed:not(.has-character) :global(.diver) {
     visibility: hidden;
   }
-  .diver :global(.diver-figure) {
-    display: block;
-    width: 100%;
-  }
-  .chute {
+
+  /* Wind streaks: always moving; the timeline fades them in for freefall. */
+  .is-animated .wind {
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    width: 8.5rem;
-    margin-left: -4.25rem;
-    margin-bottom: -1.75rem;
-    overflow: visible;
+    inset: 0;
+    z-index: 4;
+    overflow: hidden;
+    pointer-events: none;
+    visibility: hidden;
   }
-  .chute-canopy {
-    fill: var(--accent);
+  .wind span {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 18svh;
+    border-radius: 1px;
+    background: linear-gradient(rgb(255 255 255 / 0), rgb(255 255 255 / 0.7));
+    animation: rush 0.7s linear infinite;
   }
-  .chute-stripe {
-    fill: #fff;
-    opacity: 0.85;
-  }
-  .chute-lines {
-    stroke: #e2e8f0;
-    stroke-width: 1.5;
-    fill: none;
+  @keyframes rush {
+    from {
+      transform: translateY(110svh);
+    }
+    to {
+      transform: translateY(-25svh);
+    }
   }
 
   .scroll-hint {
@@ -753,17 +766,26 @@ const clouds = [
 
   .is-animated .panel {
     position: absolute;
-    top: 30svh;
+    top: 50svh;
     left: 0;
     right: 0;
     width: min(34rem, 92vw);
-    height: 62svh;
+    height: 46svh;
     margin: 0 auto;
     overflow: hidden;
     padding: 0 1.25rem;
     border-radius: 1.25rem;
     background: var(--bg);
     box-shadow: 0 12px 30px rgb(15 23 42 / 0.25);
+  }
+  /* Wide screens: the panel sits to the right and the diver drifts left (fall.ts). */
+  @media (min-width: 56rem) and (min-aspect-ratio: 5/4) {
+    .is-animated .panel {
+      top: 14svh;
+      left: 40vw;
+      right: auto;
+      height: 74svh;
+    }
   }
   .is-animated .panel-scroll {
     padding: 1rem 0 2rem;
@@ -853,12 +875,10 @@ const clouds = [
     grid-area: spot;
     align-self: end;
     justify-self: center;
+    /* Just the landing point; the character draws its own shadow. */
     width: 4.5rem;
     height: 1.25rem;
     margin-bottom: 0.5rem;
-    border-radius: 50%;
-    background: rgb(255 255 255 / 0.3);
-    border: 2px dashed rgb(255 255 255 / 0.85);
   }
   @media (max-width: 30rem) {
     .is-animated .holds {

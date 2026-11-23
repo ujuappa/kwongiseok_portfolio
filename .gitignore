@@ -25,3 +25,7 @@ pnpm-debug.log*
 
 # Private source documents (the resume has a phone number and personal email; see docs/PLAN.md → Privacy)
 docs/*.pdf
+
+# Character art: generated preview page and Python cache
+scripts/characters/preview.html
+__pycache__/
